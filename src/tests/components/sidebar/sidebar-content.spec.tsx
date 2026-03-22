@@ -115,4 +115,25 @@ describe("SidebarContent", () => {
       expect(pushMock).toHaveBeenCalledWith("/new");
     });
   });
+
+  describe("Search", () => {
+    it.only("should navigate with codified URL when user types and cleans", async () => {
+      const text = "A B";
+      makeSut();
+      const searchInput = screen.getByPlaceholderText(/buscar prompts.../i);
+
+      await user.type(searchInput, text);
+
+      // expect(pushMock).toHaveBeenCalledWith(`/?q=${encodeURIComponent(text)}`);
+      expect(pushMock).toHaveBeenCalled();
+      const lastCall = pushMock.mock.calls.at(-1);
+      expect(lastCall?.[0]).toBe("/?q=A%20B");
+
+      await user.clear(searchInput);
+
+      // expect(pushMock).toHaveBeenCalledWith("/");
+      const lastClearCall = pushMock.mock.calls.at(-1);
+      expect(lastClearCall?.[0]).toBe("/");
+    });
+  });
 });
