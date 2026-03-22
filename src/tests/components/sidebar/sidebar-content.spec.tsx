@@ -1,0 +1,118 @@
+import userEvent from "@testing-library/user-event";
+import {
+  SidebarContent,
+  type SidebarContentProps,
+} from "@/components/sidebar/sidebar-content";
+import { render, screen } from "@/lib/test-utils";
+
+const pushMock = jest.fn();
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
+
+const initialPrompts = [
+  {
+    id: "1",
+    title: "Title 01",
+    content: "Content 01",
+  },
+];
+
+const makeSut = (
+  { prompts = initialPrompts }: SidebarContentProps = {} as SidebarContentProps,
+) => {
+  return render(<SidebarContent prompts={prompts} />);
+};
+
+describe("SidebarContent", () => {
+  const user = userEvent.setup();
+
+  describe("Base", () => {
+    it("should render a new prompt button", () => {
+      makeSut();
+
+      expect(screen.getByRole("complementary")).toBeVisible();
+      expect(screen.getByRole("button", { name: "Novo prompt" })).toBeVisible();
+    });
+
+    it("should render prompts list", () => {
+      const input = [
+        {
+          id: "1",
+          title: "Title 01",
+          content: "Content 01",
+        },
+        {
+          id: "2",
+          title: "Title 02",
+          content: "Content 02",
+        },
+      ];
+      makeSut({ prompts: input });
+
+      expect(screen.getByText(input[0].title)).toBeInTheDocument();
+      expect(screen.getAllByRole("paragraph")).toHaveLength(input.length);
+    });
+
+    it("should update the search input value when user types", async () => {
+      const text = "AI";
+      makeSut();
+      const searchInput = screen.getByPlaceholderText(/buscar prompts.../i);
+
+      await user.type(searchInput, text);
+
+      expect(searchInput).toHaveValue(text);
+    });
+  });
+
+  describe("Collapse / Expand", () => {
+    it("should initiate expanded and show the minimize button", () => {
+      makeSut();
+
+      const aside = screen.getByRole("complementary");
+      expect(aside).toBeVisible();
+
+      const collapseButton = screen.getByRole("button", {
+        name: /minimizar sidebar/i,
+      });
+      expect(collapseButton).toBeVisible();
+
+      const expandButton = screen.queryByRole("button", {
+        name: /expandir sidebar/i,
+      });
+      expect(expandButton).not.toBeInTheDocument();
+    });
+
+    it("should collapse and show the expand button", async () => {
+      makeSut();
+
+      const collapseButton = screen.getByRole("button", {
+        name: /minimizar sidebar/i,
+      });
+
+      await user.click(collapseButton);
+
+      const expandButton = screen.queryByRole("button", {
+        name: /expandir sidebar/i,
+      });
+      expect(expandButton).toBeInTheDocument();
+
+      expect(collapseButton).not.toBeInTheDocument();
+    });
+  });
+
+  describe("New Prompt Button", () => {
+    it("should navigate to the new prompt page when clicked /new", async () => {
+      makeSut();
+
+      const newPromptButton = screen.getByRole("button", {
+        name: "Novo prompt",
+      });
+
+      await user.click(newPromptButton);
+
+      expect(pushMock).toHaveBeenCalledWith("/new");
+    });
+  });
+});
