@@ -6,26 +6,24 @@ import {
   ArrowRightToLine,
   X as CloseButton,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useState } from "react";
+import type { PromptSummary } from "@/core/domain/prompts/prompt.entity";
 import { Logo } from "../logo";
+import { PromptList } from "../prompts";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
-type Prompt = {
-  id: string;
-  title: string;
-  content: string;
-};
-
 export type SidebarContentProps = {
-  prompts: Prompt[];
+  prompts: PromptSummary[];
 };
 
 export const SidebarContent = ({ prompts }: SidebarContentProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") || "");
 
   const collapsedSidebar = () => setIsCollapsed(true);
   const expandSidebar = () => setIsCollapsed(false);
@@ -95,6 +93,7 @@ export const SidebarContent = ({ prompts }: SidebarContentProps) => {
               <Input
                 name="q"
                 type="text"
+                value={query}
                 placeholder="Buscar prompts..."
                 onChange={handleQueryChange}
                 autoFocus
@@ -111,9 +110,7 @@ export const SidebarContent = ({ prompts }: SidebarContentProps) => {
         </section>
       )}
 
-      {prompts.map((prompt) => (
-        <p key={prompt.id}>{prompt.title}</p>
-      ))}
+      <PromptList prompts={prompts} />
     </aside>
   );
 };

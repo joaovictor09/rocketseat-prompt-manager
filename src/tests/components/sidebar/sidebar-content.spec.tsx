@@ -6,9 +6,10 @@ import {
 import { render, screen } from "@/lib/test-utils";
 
 const pushMock = jest.fn();
-
+let mockSearchParams = new URLSearchParams();
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  useSearchParams: () => mockSearchParams,
 }));
 
 const initialPrompts = [
@@ -117,23 +118,31 @@ describe("SidebarContent", () => {
   });
 
   describe("Search", () => {
-    it.only("should navigate with codified URL when user types and cleans", async () => {
+    it("should navigate with codified URL when user types and cleans", async () => {
       const text = "A B";
       makeSut();
       const searchInput = screen.getByPlaceholderText(/buscar prompts.../i);
 
       await user.type(searchInput, text);
 
-      // expect(pushMock).toHaveBeenCalledWith(`/?q=${encodeURIComponent(text)}`);
       expect(pushMock).toHaveBeenCalled();
       const lastCall = pushMock.mock.calls.at(-1);
       expect(lastCall?.[0]).toBe("/?q=A%20B");
 
       await user.clear(searchInput);
 
-      // expect(pushMock).toHaveBeenCalledWith("/");
       const lastClearCall = pushMock.mock.calls.at(-1);
       expect(lastClearCall?.[0]).toBe("/");
+    });
+
+    it("should initialize the search input with the search param", async () => {
+      const text = "initial";
+      const searchParam = new URLSearchParams({ q: text });
+      mockSearchParams = searchParam;
+      makeSut();
+      const searchInput = screen.getByPlaceholderText(/buscar prompts.../i);
+
+      expect(searchInput).toHaveValue("initial");
     });
   });
 });
